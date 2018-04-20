@@ -25,8 +25,9 @@
             android:name=".Home"
             android:label="@string/title_activity_home"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity android:name=".AgregarComercio"></activity>
-        <activity android:name=".SimpleScannerActivity"></activity>
+        <activity android:name=".AgregarComercio" />
+        <activity android:name=".SimpleScannerActivity" />
+        <activity android:name=".Precio"></activity>
     </application>
 
 </manifest>

@@ -65,6 +65,7 @@ public class listacomercios extends AppCompatActivity implements ListView.OnItem
         lista.setOnItemClickListener(this);
         adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
         lista.setAdapter(adapter);
+
     }
 
     @Override
@@ -124,4 +125,5 @@ public class listacomercios extends AppCompatActivity implements ListView.OnItem
         RequestQueue MyRequestQueue = Volley.newRequestQueue(this);
         MyRequestQueue.add(getRequest);
     }
+
 }
