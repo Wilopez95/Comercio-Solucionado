@@ -1,13 +1,9 @@
 package com.example.bvarg.comercio;
 
 import android.app.Activity;
-import android.app.Dialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.AlertDialog;
 import android.util.Log;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -21,9 +17,7 @@ import com.android.volley.toolbox.Volley;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 
 import me.dm7.barcodescanner.zbar.Result;
 import me.dm7.barcodescanner.zbar.ZBarScannerView;
@@ -32,7 +26,7 @@ import me.dm7.barcodescanner.zbar.ZBarScannerView;
  * Created by Bvarg on 04/04/2018.
  */
 
-public class SimpleScannerActivity extends Activity implements ZBarScannerView.ResultHandler {
+public class SimpleScannerActivity2 extends Activity implements ZBarScannerView.ResultHandler {
     private ZBarScannerView mScannerView;
     @Override
     public void onCreate(Bundle state) {
@@ -90,6 +84,8 @@ public class SimpleScannerActivity extends Activity implements ZBarScannerView.R
                                 if(jsonArray.length() == 0){
                                     //no esta en el sistema hay que agregar a las dos partes quedese en la misma interfaz
                                     Log.i("Caso 1","No hay nada agregado");
+                                    Intent intent = new Intent(getApplicationContext(), Home.class);
+                                    startActivity(intent);
                                 }
                                 else{
                                     //si esta en el sistema
@@ -137,6 +133,7 @@ public class SimpleScannerActivity extends Activity implements ZBarScannerView.R
                                 JSONArray jsonArray = response.getJSONArray(key);
                                 Log.i("largo2", String.valueOf(jsonArray.length()));
                                 boolean paso = false;
+                                String productbymarket = "";
                                 for(int i= 0; i<jsonArray.length(); i++){
                                     JSONObject mainObject = new JSONObject(jsonArray.getString(i));
                                     Log.i("codigo2",mainObject.getString("_id"));
@@ -148,24 +145,23 @@ public class SimpleScannerActivity extends Activity implements ZBarScannerView.R
                                         Log.i("codigo22", jsonObject.getString("_id"));
                                         if(jsonObject.getString("_id").equals(id)){
                                             paso = true;
+                                            productbymarket = mainObject.getString("_id");
+
                                         }
                                         keys2.next();
                                         keys2.next();
                                     }
                                 }
                                 if(paso){
-                                    //Producto ya se encuentra en las dos partes
-                                    Log.i("Caso 2","Agregado em las dos partes");
-                                    Toast.makeText(getApplicationContext(), "El producto ya se encuentra registrado", Toast.LENGTH_SHORT).show();
-                                    Intent intent = new Intent(getApplicationContext(), Home.class);
-                                    startActivity(intent);
+                                    //Hay que eliminar
+                                    Log.i("Caso 2","Hay que eliminar");
+                                    eliminar(productbymarket);
                                 }
                                 else{
-                                    //Agregar producto al mercado, existe en la base
-                                    Log.i("Caso 3","Agregar a mercado");
-                                    Precio.idlugar = idmarket;
-                                    Precio.idproducto = id;
-                                    Intent intent = new Intent(getApplicationContext(), Precio.class);
+                                    //El producto no se encuentra en el inventario
+                                    Log.i("Caso 3","El producto no se encuentra en el inventario");
+                                    Toast.makeText(getApplicationContext(), "El producto no se encuentra en el Inventario", Toast.LENGTH_SHORT).show();
+                                    Intent intent = new Intent(getApplicationContext(), Home.class);
                                     startActivity(intent);
                                 }
                             }
@@ -186,5 +182,32 @@ public class SimpleScannerActivity extends Activity implements ZBarScannerView.R
         // add it to the RequestQueue
         RequestQueue MyRequestQueue = Volley.newRequestQueue(this);
         MyRequestQueue.add(getRequest);
+    }
+
+    public void eliminar (String id){
+        StringRequest deleteRequest = new StringRequest(Request.Method.DELETE, "https://food-manager.herokuapp.com/productsbymarkets/"+id,
+                new Response.Listener<String>()
+                {
+                    @Override
+                    public void onResponse(String response) {
+                        // response
+                        Log.d("Completaoo", "Producto eliminado");
+                        Toast.makeText(getApplicationContext(), response, Toast.LENGTH_LONG).show();
+                        Intent intent = new Intent(getApplicationContext(), Home.class);
+                        startActivity(intent);
+                    }
+                },
+                new Response.ErrorListener()
+                {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // error.
+                        Log.d("Error", "Error con el Id de producto");
+
+                    }
+                }
+        );
+        RequestQueue MyRequestQueue = Volley.newRequestQueue(this);
+        MyRequestQueue.add(deleteRequest);
     }
 }

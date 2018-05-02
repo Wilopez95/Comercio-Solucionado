@@ -27,6 +27,7 @@
             android:theme="@style/AppTheme.NoActionBar" />
         <activity android:name=".AgregarComercio" />
         <activity android:name=".SimpleScannerActivity" />
+        <activity android:name=".SimpleScannerActivity2" />
         <activity android:name=".Precio"></activity>
     </application>
 

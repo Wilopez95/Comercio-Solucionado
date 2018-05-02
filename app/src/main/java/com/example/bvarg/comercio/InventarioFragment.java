@@ -1,12 +1,30 @@
 package com.example.bvarg.comercio;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TableLayout;
+import android.widget.TableRow;
+import android.widget.TextView;
+
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.Iterator;
 
 
 /**
@@ -26,6 +44,8 @@ public class InventarioFragment extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+    View vista;
+    TableLayout tableLayout;
 
     private OnFragmentInteractionListener mListener;
 
@@ -64,7 +84,11 @@ public class InventarioFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_inventario, container, false);
+        vista = inflater.inflate(R.layout.fragment_inventario, container, false);
+        tableLayout = (TableLayout) vista.findViewById(R.id.tabla);
+
+        llenar(MainActivity.sharedPreferences.getString("idcomercio",""));
+        return vista;
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -104,5 +128,97 @@ public class InventarioFragment extends Fragment {
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
+    }
+
+    public void llenartabla(){
+
+    }
+
+    public void llenar(String id){
+        // prepare the Request
+        JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.GET, "https://food-manager.herokuapp.com/productsbymarkets/market/"+id, null,
+                new Response.Listener<JSONObject>()
+                {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        // display response
+                        Log.d("Response", response.toString());
+                        try{
+                            Iterator<String> keys = response.keys();
+                            while (keys.hasNext())
+                            {
+                                // obtiene el nombre del objeto.
+                                String key = keys.next();
+                                Log.i("Parser", "objeto : " + key);
+                                JSONArray jsonArray = response.getJSONArray(key);
+                                Log.i("largo",String.valueOf(jsonArray.length()));
+                                for(int i= 0; i<response.getJSONArray(key).length(); i++){
+                                    JSONObject mainObject = new JSONObject(jsonArray.getString(i));
+                                    JSONObject mainObject2 = new JSONObject(mainObject.getString("product"));
+                                    //obtiene valores dentro del objeto.
+                                    String nombre = mainObject2.getString("name");
+                                    String marca = mainObject2.getString("brand");
+                                    String descripcion = mainObject2.getString("description");
+                                    Log.i("nombre",nombre);
+                                    Log.i("marca",marca);
+                                    Log.i("descripcion",descripcion);
+
+                                    TableRow fila = new TableRow(vista.getContext());
+                                    fila.setBackgroundColor(Color.parseColor("#80CBC4"));
+                                    TextView tv1 = new TextView(vista.getContext());
+                                    TextView tv2 = new TextView(vista.getContext());
+                                    TextView tv3 = new TextView(vista.getContext());
+                                    tv1.setText(nombre);
+                                    tv2.setText(marca);
+                                    tv3.setText(descripcion);
+                                    fila.addView(tv1);
+                                    fila.addView(tv2);
+                                    fila.addView(tv3);
+                                    tableLayout.addView(fila);
+
+
+
+
+
+
+                                    //String cadena = nombre + " " + marca + " " + descripcion;
+                                    //Log.i("cadena",cadena);
+                                    //TableRow row = new TableRow(vista.getContext());
+                                    //TextView textView;
+                                    //textView = new TextView(vista.getContext());
+                                    //textView.setGravity(Gravity.CENTER_VERTICAL);
+                                    //textView.setPadding(15,15,15,15);
+                                    //textView.setBackgroundResource(R.color.colorPrimary);
+                                    //textView.setText(cadena);
+                                    //textView.setTextColor(Color.WHITE);
+                                    //row.addView(textView);
+                                    //Log.i("qwerty","qwerty");
+                                    //tableLayout.addView(row);
+                                    //Log.i("qwerty2","qwerty2");
+                                    //adapter.add(valorName);
+                                    //listaid.add(valorId);
+                                }
+
+                                //Imprimimos los valores.
+                                //Log.i("Nombre", valorName);
+                                //Log.i("ID", valorId);
+                            }
+                        }
+                        catch (Exception e){
+
+                        }
+                    }
+                },
+                new Response.ErrorListener()
+                {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d("Error.Response", "No hay locales");
+                    }
+                }
+        );
+        // add it to the RequestQueue
+        RequestQueue MyRequestQueue = Volley.newRequestQueue(vista.getContext());
+        MyRequestQueue.add(getRequest);
     }
 }

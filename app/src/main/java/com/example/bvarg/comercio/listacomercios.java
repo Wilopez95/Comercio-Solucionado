@@ -125,5 +125,4 @@ public class listacomercios extends AppCompatActivity implements ListView.OnItem
         RequestQueue MyRequestQueue = Volley.newRequestQueue(this);
         MyRequestQueue.add(getRequest);
     }
-
 }

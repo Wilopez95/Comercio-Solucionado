@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -87,6 +88,7 @@ public class Home extends AppCompatActivity
         boolean fragmentseleccionado = false;
 
         if (id == R.id.nav_agregarproducto) {
+            Log.d("esteno","mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm");
             miFragment = new AgregarFragment();
             fragmentseleccionado = true;
 
@@ -95,6 +97,7 @@ public class Home extends AppCompatActivity
             fragmentseleccionado = true;
 
         } else if (id == R.id.nav_inventario) {
+            Log.d("estesi","qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq");
             miFragment = new InventarioFragment();
             fragmentseleccionado = true;
 

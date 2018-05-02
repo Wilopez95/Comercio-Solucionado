@@ -9,21 +9,26 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 
 /**
@@ -43,12 +48,17 @@ public class AgregarFragment extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+    ArrayAdapter<String> adapter;
+    String[] categorias = {"Canasta Basica","Carnes", "Pastas","Salsas","Condimentos","Granos","Lacteos","Frutas y Verduras","Pan","Enlatados","Snacks","Golosinas","Refrescos","Higiene Personal","Productos para hogar","Licores"};
     static String codigodebarra;
+    static String idproducto;
     Button agregar;
     EditText nombre;
+    EditText marca;
     Spinner categoria;
     EditText descripcion;
     EditText precio;
+    View vista;
 
     private OnFragmentInteractionListener mListener;
 
@@ -89,7 +99,30 @@ public class AgregarFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_agregar, container, false);
+        vista = inflater.inflate(R.layout.fragment_agregar, container, false);
+
+        nombre = (EditText) vista.findViewById(R.id.editTextNombre);
+        marca = (EditText) vista.findViewById(R.id.editTextMarca);
+        descripcion = (EditText) vista.findViewById(R.id.editTextDescripcion);
+        precio = (EditText) vista.findViewById(R.id.editTextPrecio);
+        categoria = (Spinner) vista.findViewById(R.id.spinnerCategoria);
+
+        adapter = new ArrayAdapter<String>(vista.getContext(), android.R.layout.simple_spinner_item,categorias);
+        categoria.setAdapter(adapter);
+
+
+        agregar = (Button) vista.findViewById(R.id.buttonAgregar);
+        agregar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                agregar(nombre.getText().toString(), marca.getText().toString(), descripcion.getText().toString(), categoria.getSelectedItem().toString(), codigodebarra, MainActivity.sharedPreferences.getString("token", ""));
+            }
+        });
+
+
+
+
+        return vista;
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -129,5 +162,197 @@ public class AgregarFragment extends Fragment {
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
+    }
+
+    public void agregar(final String name, final String brand, final String description,final String category, final String code, final String token){
+        StringRequest postRequest = null;
+        String url = "https://food-manager.herokuapp.com/products/";
+        postRequest = new StringRequest(Request.Method.POST, url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        // response
+                        Log.i("token",response);
+                        validarcodigo(code);
+
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // error
+                        Log.d("Error.Response", "fallo");
+                    }
+                }
+        ) {
+            @Override
+            protected Map<String, String> getParams() {
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("name", name);
+                params.put("brand", brand);
+                params.put("description", description);
+                params.put("category", category);
+                params.put("code", code);
+                params.put("token", token);
+
+                return params;
+            }
+        };
+        RequestQueue MyRequestQueue = Volley.newRequestQueue(vista.getContext());
+        MyRequestQueue.add(postRequest);
+    }
+    public void validarcodigo(String id){
+        // prepare the Request
+        JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.GET, "https://food-manager.herokuapp.com/products/code/"+id, null,
+                new Response.Listener<JSONObject>()
+                {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        // display response
+                        try{
+                            Iterator<String> keys = response.keys();
+                            keys.next();
+                            while (keys.hasNext())
+                            {
+                                // obtiene el nombre del objeto.
+                                String key = keys.next();
+                                Log.i("Codigo", key);
+                                JSONArray jsonArray = response.getJSONArray(key);
+                                if(jsonArray.length() == 0){
+                                    //no esta en el sistema hay que agregar a las dos partes quedese en la misma interfaz
+                                    Log.i("Caso 1","Agregar a las dos partes");
+                                }
+                                else{
+                                    //si esta en el sistema
+                                    JSONObject mainObject = new JSONObject(jsonArray.getString(0));
+                                    Log.i("idproducto",mainObject.getString("_id"));
+                                    Log.i("largo",String.valueOf(jsonArray.length()));
+                                    //validarcodigo2(mainObject.getString("_id"),"5ad41eba8212a036c044e18b");
+                                    validarcodigo2(mainObject.getString("_id"),MainActivity.sharedPreferences.getString("idcomercio", ""));
+                                }
+                            }
+                        }
+                        catch (Exception e){
+
+                        }
+                    }
+                },
+                new Response.ErrorListener()
+                {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d("Error", "no se pudo revisar el codigo");
+                    }
+                }
+        );
+        // add it to the RequestQueue
+        RequestQueue MyRequestQueue = Volley.newRequestQueue(vista.getContext());
+        MyRequestQueue.add(getRequest);
+    }
+    public void validarcodigo2(final String id, final String idmarket){
+        // prepare the Request
+        final JsonObjectRequest getRequest = new JsonObjectRequest(Request.Method.GET, "https://food-manager.herokuapp.com/productsbymarkets/market/"+idmarket, null,
+                new Response.Listener<JSONObject>()
+                {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        // display response
+                        try{
+                            Iterator<String> keys = response.keys();
+                            while (keys.hasNext())
+                            {
+                                // obtiene el nombre del objeto.
+                                String key = keys.next();
+                                Log.i("Codigo", key);
+                                JSONArray jsonArray = response.getJSONArray(key);
+                                Log.i("largo", String.valueOf(jsonArray.length()));
+                                boolean paso = false;
+                                for(int i= 0; i<jsonArray.length(); i++){
+                                    JSONObject mainObject = new JSONObject(jsonArray.getString(i));
+                                    Log.i("idproducto",mainObject.getString("_id"));
+                                    Iterator<String> keys2 = mainObject.keys();
+                                    keys2.next();
+                                    while (keys2.hasNext()){
+                                        String key2 = keys2.next();
+                                        JSONObject jsonObject = mainObject.getJSONObject(key2);
+                                        Log.i("idproducto", jsonObject.getString("_id"));
+                                        if(jsonObject.getString("_id").equals(id)){
+                                            paso = true;
+                                        }
+                                        keys2.next();
+                                        keys2.next();
+                                    }
+                                }
+                                if(paso){
+                                    //Producto ya se encuentra en las dos partes
+                                    Log.i("Caso 2","Ya se encuentra agregado en las dos partes");
+                                    Toast.makeText(vista.getContext(), "El producto ya se encuentra registrado", Toast.LENGTH_SHORT).show();
+                                    Intent intent = new Intent(vista.getContext(), Home.class);
+                                    startActivity(intent);
+                                }
+                                else{
+                                    //Agregar producto al mercado, existe en la base
+                                    Log.i("Caso 3","Agregar producto al mercado");
+
+                                    agregarproducto(id, idmarket, precio.getText().toString(), MainActivity.sharedPreferences.getString("token", ""));
+                                    Intent intent = new Intent(vista.getContext(), Precio.class);
+                                    startActivity(intent);
+                                }
+                            }
+                        }
+                        catch (Exception e){
+
+                        }
+                    }
+                },
+                new Response.ErrorListener()
+                {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d("juuuum", "No sirvio esta vara");
+                    }
+                }
+        );
+        // add it to the RequestQueue
+        RequestQueue MyRequestQueue = Volley.newRequestQueue(vista.getContext());
+        MyRequestQueue.add(getRequest);
+    }
+
+    public void agregarproducto(final String id, final String idmarket, final String precio, final String token){
+        StringRequest postRequest = null;
+        String url = "https://food-manager.herokuapp.com/productsbymarkets";
+        postRequest = new StringRequest(Request.Method.POST, url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        // response
+                        //sharedPreferences.edit().putString("token", response.substring(96,response.length()-2)).apply();
+                        //sharedPreferences.edit().putString("id", response.substring(61,response.length()-277)).apply();
+                        Log.i("token",response.toString());
+                        Intent intent = new Intent(vista.getContext(), Home.class);
+                        startActivity(intent);
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // error
+                        Log.d("Error.Response", "fallo");
+                    }
+                }
+        ) {
+            @Override
+            protected Map<String, String> getParams() {
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("productId", id);
+                params.put("marketId", idmarket);
+                params.put("price", precio);
+                params.put("token", token);
+
+                return params;
+            }
+        };
+        RequestQueue MyRequestQueue = Volley.newRequestQueue(vista.getContext());
+        MyRequestQueue.add(postRequest);
     }
 }

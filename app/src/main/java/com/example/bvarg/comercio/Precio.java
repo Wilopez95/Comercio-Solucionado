@@ -31,15 +31,17 @@ public class Precio extends AppCompatActivity {
 
         agregar = (Button) findViewById(R.id.buttonPrecio);
         precio = (EditText) findViewById(R.id.editTextPrecio);
-        precio.setOnClickListener(new View.OnClickListener() {
+        agregar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                agregarproducto(idproducto, idlugar, agregar.getText().toString());
+                Log.i("idproducto",idproducto);
+                Log.i("idlugar",idlugar);
+                agregarproducto(idproducto, idlugar, precio.getText().toString(), MainActivity.sharedPreferences.getString("token", ""));
             }
         });
     }
 
-    public void agregarproducto(final String id, final String idmarket, final String precio){
+    public void agregarproducto(final String id, final String idmarket, final String precio, final String token){
         StringRequest postRequest = null;
         String url = "https://food-manager.herokuapp.com/productsbymarkets";
         postRequest = new StringRequest(Request.Method.POST, url,
@@ -68,6 +70,7 @@ public class Precio extends AppCompatActivity {
                 params.put("productId", id);
                 params.put("marketId", idmarket);
                 params.put("price", precio);
+                params.put("token", token);
 
                 return params;
             }
